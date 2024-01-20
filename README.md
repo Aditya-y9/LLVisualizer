@@ -3,7 +3,8 @@
 Please dont judge!
 
 
-<img width="959" alt="image" src="https://github.com/Aditya-y9/LLVisualizer/assets/122613756/2764ab12-0530-493c-9967-ca2e4a74cff5">
+![image](https://github.com/Aditya-y9/LLVisualizer/assets/122613756/b6939db5-c2f0-4ee2-80b9-2380abf63687)
+
 
 
 
