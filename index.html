@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linked List Visualization</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-color: #ecf0f1;
+      overflow: hidden;
+    }
+
+    #linked-list-container {
+      display: flex;
+      align-items: center;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .node {
+      width: 80px;
+      height: 80px;
+      background-color: #3498db;
+      border: 2px solid #2980b9;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-around;
+      margin: 0 10px;
+      position: relative;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transform-origin: center bottom;
+      transition: transform 0.3s ease-in-out;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .data, .next {
+      font-size: 12px;
+    }
+
+    .arrow {
+      position: absolute;
+      width: 40px;
+      height: 0;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      border-left: 20px solid #3498db;
+      left: -20px;
+      top: 50%;
+      transform: translateY(-50%);
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .node:hover {
+      background-color: #2980b9;
+      transform: scale(1.1) translateY(-10px);
+    }
+
+    #controls {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      z-index: 1;
+    }
+
+    button {
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 1em;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease-in-out;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    #cpp-code {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #2ecc71;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      color: white;
+      width: 300px;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="linked-list-container"></div>
+<div id="controls">
+  <button id="createNodeBtn">Create Node</button>
+  <button id="deleteNodeBtn">Delete Node</button>
+  <button id="traverseBtn">Traverse</button>
+  <button id="makeReferenceBtn">Make Reference</button>
+</div>
+<div id="cpp-code"></div>
+
+<script>
+  class Node {
+    constructor(data) {
+      this.data = data;
+      this.next = null;
+    }
+  }
+
+  class LinkedList {
+    constructor() {
+      this.head = null;
+      this.references = [];
+    }
+
+    insertNode(data) {
+      const newNode = new Node(data);
+      if (!this.head) {
+        this.head = newNode;
+      } else {
+        let current = this.head;
+        while (current.next) {
+          current = current.next;
+        }
+        current.next = newNode;
+      }
+      return newNode;
+    }
+
+    deleteNode() {
+      if (this.head) {
+        const data = prompt("Enter the data to delete:");
+        if (data !== null) {
+          if (this.head.data === data) {
+            this.head = this.head.next;
+          } else {
+            let current = this.head;
+            while (current.next) {
+              if (current.next.data === data) {
+                current.next = current.next.next;
+                break;
+              }
+              current = current.next;
+            }
+          }
+        }
+      }
+    }
+
+    traverse() {
+      let current = this.head;
+      let cppCode = "Node* current = head;\nwhile (current) {\n  // Process current node (current->data)\n  current = current->next;\n}";
+      return cppCode;
+    }
+
+    makeReference(fromData, toData) {
+      const fromNode = this.findNode(fromData);
+      const toNode = this.findNode(toData);
+      if (fromNode && toNode && fromNode !== toNode) {
+        this.references.push({ from: fromNode, to: toNode });
+      }
+    }
+
+    findNode(data) {
+      let current = this.head;
+      while (current) {
+        if (current.data == data) {
+          return current;
+        }
+        current = current.next;
+      }
+      return null;
+    }
+  }
+
+  const linkedList = new LinkedList();
+  const linkedListContainer = document.getElementById('linked-list-container');
+  const cppCodeContainer = document.getElementById('cpp-code');
+  const createNodeBtn = document.getElementById('createNodeBtn');
+  const deleteNodeBtn = document.getElementById('deleteNodeBtn');
+  const traverseBtn = document.getElementById('traverseBtn');
+  const makeReferenceBtn = document.getElementById('makeReferenceBtn');
+
+  createNodeBtn.addEventListener('click', () => createNode());
+  deleteNodeBtn.addEventListener('click', () => deleteNode());
+  traverseBtn.addEventListener('click', () => traverse());
+  makeReferenceBtn.addEventListener('click', () => makeReference());
+
+  function createNode() {
+    const data = prompt("Enter data for the new node:");
+    if (data !== null) {
+      const newNode = linkedList.insertNode(data);
+      displayLinkedList();
+      displayCppCode(`linkedList.insertNode(${data});`);
+    }
+  }
+
+  function deleteNode() {
+    linkedList.deleteNode();
+    displayLinkedList();
+    displayCppCode("linkedList.deleteNode();");
+  }
+
+  function traverse() {
+    displayLinkedList();
+    animateTraversal();
+    displayCppCode(linkedList.traverse());
+  }
+
+  function makeReference() {
+    const fromData = prompt("Enter data of the node to make reference from:");
+    const toData = prompt("Enter data of the node to set as reference:");
+    if (fromData !== null && toData !== null) {
+      linkedList.makeReference(fromData, toData);
+      displayLinkedList();
+      displayCppCode(`linkedList.makeReference(${fromData}, ${toData});`);
+    }
+  }
+
+  function displayLinkedList() {
+    linkedListContainer.innerHTML = "";
+    let current = linkedList.head;
+    while (current) {
+      const nodeElement = createNodeElement(current);
+      linkedListContainer.appendChild(nodeElement);
+      current = current.next;
+    }
+  }
+
+  function createNodeElement(node) {
+    const nodeElement = document.createElement("div");
+    nodeElement.className = "node";
+    nodeElement.textContent = node.data;
+
+    const dataCompartment = document.createElement("div");
+    dataCompartment.className = "data";
+    dataCompartment.textContent = `Data: ${node.data}`;
+
+    const nextCompartment = document.createElement("div");
+    nextCompartment.className = "next";
+    const nextData = node.next ? `Next: ${node.next.data}` : "Next: null";
+    nextCompartment.textContent = nextData;
+
+    nodeElement.appendChild(dataCompartment);
+    nodeElement.appendChild(nextCompartment);
+
+    if (node.next) {
+      const arrowElement = document.createElement("div");
+      arrowElement.className = "arrow";
+      nodeElement.appendChild(arrowElement);
+    }
+
+    nodeElement.addEventListener("click", () => {
+      if (linkedList.references.length > 0) {
+        makeReference(linkedList.references[0].from.data, node.data);
+        linkedList.references = [];
+      }
+    });
+
+    return nodeElement;
+  }
+
+  function makeReference(fromData, toData) {
+    const fromNodeElement = linkedListContainer.querySelector(`.node[data="${fromData}"]`);
+    const toNodeElement = linkedListContainer.querySelector(`.node[data="${toData}"]`);
+
+    if (fromNodeElement && toNodeElement) {
+      const arrowElement = document.createElement("div");
+      arrowElement.className = "arrow";
+      fromNodeElement.appendChild(arrowElement);
+    }
+  }
+
+  function displayCppCode(code) {
+    cppCodeContainer.textContent = code;
+  }
+
+  function animateTraversal() {
+    const nodes = document.querySelectorAll(".node");
+    nodes.forEach((node, index) => {
+      setTimeout(() => {
+        node.style.transform = "scale(1.2)";
+        setTimeout(() => {
+          node.style.transform = "scale(1)";
+        }, 500);
+      }, index * 1000);
+    });
+  }
+
+  displayLinkedList();
+</script>
+
+</body>
+</html>
