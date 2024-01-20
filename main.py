@@ -1,6 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
-from mailcap import show
+from tkinter import ttk, simpledialog
 
 class Node:
     def __init__(self, data):
@@ -74,16 +73,78 @@ class LinkedListApp:
         self.next_node_var = tk.StringVar()
         self.next_node_var.set("None")
 
-        self.dev = ttk.Label(self.root, text="Made with ❤️by Aditya Yedurkar")
+        self.dev = ttk.Label(self.root, text="Made with ❤️ by Aditya Yedurkar")
         self.dev.pack(side=tk.BOTTOM, padx=10, pady=10)
 
+        self.spacing = 80  # Initial spacing between nodes
         self.create_buttons()
+
+    def insert_node(self):
+        data = self.linked_list.length + 1
+        self.linked_list.insert_node(data)
+        x = 20  + self.spacing
+        self.draw_node(data, x, 200)
+        self.spacing += 80  # Increase the spacing for the next node
+        self.draw_cpp_code(f"linkedList.insertNode({data});")
+
+    def delete_node(self):
+        data = self.linked_list.length
+        if data > 0:
+            self.linked_list.delete_node(data)
+            self.clear_canvas()
+            self.draw_linked_list()
+            self.draw_cpp_code(f"linkedList.deleteNode({data});")
+
+    def traverse(self):
+        self.clear_canvas()
+        self.draw_linked_list()
+        cpp_code = self.linked_list.traverse()
+        self.draw_cpp_code(cpp_code)
+
+
+    def make_reference(self):
+        node_to_reference = simpledialog.askinteger("Make Reference", "Enter the data of the node to make reference from:", parent=self.root)
+        node_referenced = simpledialog.askinteger("Make Reference", "Enter the data of the node to set as reference:", parent=self.root)
+
+        # Find the coordinates of the nodes
+        x1 = 60 + (node_to_reference - 1) * 80 + 60
+        x2 = 60 + (node_referenced - 1) * 80 + 60
+
+        # Draw arrow from node_to_reference to node_referenced
+        self.draw_arrow(x1, 200, x2, 200)
+
+        # Update the linked list logic
+        current = self.linked_list.head
+        node_to_reference_ptr = None
+        node_referenced_ptr = None
+
+        # Find the nodes in the linked list
+        while current:
+            if current.data == node_to_reference:
+                node_to_reference_ptr = current
+            elif current.data == node_referenced:
+                node_referenced_ptr = current
+
+            if node_to_reference_ptr and node_referenced_ptr:
+                break
+
+            current = current.next
+
+        # Set the next reference
+        if node_to_reference_ptr and node_referenced_ptr:
+            node_to_reference_ptr.next = node_referenced_ptr
+
+        # Redraw the linked list
+        self.clear_canvas()
+        self.draw_linked_list()
+        self.draw_cpp_code(f"Node* nodeToReference = head;\nNode* nodeReferenced = head;\nwhile (nodeToReference->data != {node_to_reference})\n    nodeToReference = nodeToReference->next;\nwhile (nodeReferenced->data != {node_referenced})\n    nodeReferenced = nodeReferenced->next;\nnodeToReference->next = nodeReferenced;")
+
 
     def create_buttons(self):
         ttk.Button(self.root, text="Insert Node", command=self.insert_node).pack(side=tk.TOP, padx=10, pady=5)
         ttk.Button(self.root, text="Delete Node", command=self.delete_node).pack(side=tk.TOP, padx=10, pady=5)
         ttk.Button(self.root, text="Traverse", command=self.traverse).pack(side=tk.TOP, padx=10, pady=5)
-        ttk.Button(self.root, text="Set Next Reference", command=self.set_next_reference).pack(side=tk.TOP, padx=10, pady=5)
+        ttk.Button(self.root, text="Make Reference", command=self.make_reference).pack(side=tk.TOP, padx=10, pady=5)
 
         ttk.Label(self.root, text="Choose Next Node:").pack(side=tk.TOP, padx=10, pady=5)
         nodes = ["None"] + [str(i) for i in range(1, self.linked_list.length + 1)]
@@ -103,73 +164,50 @@ class LinkedListApp:
         self.canvas.create_rectangle(x + 5, y + 25, x + box_size - 5, y + box_size - 5, outline='black', fill='white')
         self.canvas.create_text(x + box_size // 2, y + box_size - 10, text=next_text, font=('Arial', 8))
 
-        return x + box_size
+        return x + box_size  # Return the updated x value
+
 
     def draw_arrow(self, x1, y1, x2, y2):
+        y1 += 30
+        y2 += 30
         arrow_head_size = 5
-        dx = x2 - x1
-        dy = y2 - y1
-        length = (dx**2 + dy**2)**0.5
-        if length > 0:
-            dx /= length
-            dy /= length
-            x2 = x1 + dx * 40  # Adjust arrow length to 40 pixels
-            y2 = y1 + dy * 40  # Adjust arrow length to 40 pixels
+        arrow_length = 10
+        self.canvas.create_line(x1, y1, x2 - arrow_length, y2, arrow=tk.LAST, width=2)
 
-        self.canvas.create_line(x1, y1, x2, y2, arrow=tk.LAST, width=2)
-        self.canvas.create_polygon(x2, y2, x2 - arrow_head_size * dx - arrow_head_size * dy,
-                                   y2 - arrow_head_size * dy + arrow_head_size * dx,
-                                   x2 - arrow_head_size * dx + arrow_head_size * dy,
-                                   y2 - arrow_head_size * dy - arrow_head_size * dx, fill='black')
+        # Calculate the arrowhead coordinates
+        angle = math.atan2(y2 - y1, x2 - x1)
+        x_head = x2 - arrow_head_size * math.cos(angle - math.pi / 6)
+        y_head = y2 - arrow_head_size * math.sin(angle - math.pi / 6)
 
-    def insert_node(self):
-        data = self.linked_list.length + 1
-        self.linked_list.insert_node(data)
-        self.clear_canvas()
-        self.draw_linked_list()
-        self.draw_cpp_code(f"linkedList.insertNode({data});")
+        x_tail = x2 - arrow_head_size * math.cos(angle + math.pi / 6)
+        y_tail = y2 - arrow_head_size * math.sin(angle + math.pi / 6)
 
-    def delete_node(self):
-        data = self.linked_list.length
-        if data > 0:
-            self.linked_list.delete_node(data)
-            self.clear_canvas()
-            self.draw_linked_list()
-            self.draw_cpp_code(f"linkedList.deleteNode({data});")
+        # Draw the arrowhead polygon
+        self.canvas.create_polygon(x2, y2, x_head, y_head, x_tail, y_tail, fill='black')
 
-    def traverse(self):
-        self.clear_canvas()
-        self.draw_linked_list()
-        cpp_code = self.linked_list.traverse()
-        self.draw_cpp_code(cpp_code)
-
-    def set_next_reference(self):
-        next_node_str = self.next_node_var.get()
-        if next_node_str != "None":
-            data = self.linked_list.length
-            next_node_data = int(next_node_str)
-            next_x = self.draw_node(next_node_data, 20 + (next_node_data - 1) * 70, 200)
-            current_x = 20 + (data - 1) * 70
-            self.draw_arrow(current_x, 230, next_x, 230)
-            self.linked_list.head.next = Node(next_node_data)  # Adjust the linked list manually
-            self.draw_cpp_code(f"linkedList.head->next = new Node({next_node_data});")
 
     def draw_linked_list(self):
         current = self.linked_list.head
-        x = 20
+        x = 60
         while current:
-            x = self.draw_node(current.data, x+40, 200)
-            if current.next:
-                # next_x = self.draw_node(current.next.data, x + 40, 200)
-                self.draw_arrow(x, 230, x+40, 230)
+            x = self.draw_node(current.data, x + 60, 200)
             current = current.next
+
+        # Reset x for drawing arrows
+        x = 60
+        current = self.linked_list.head
+        while current and current.next:
+            x_from = x + 60
+            x_to = x + 60 + self.spacing
+            x += self.spacing
+            current = current.next
+
 
     def draw_cpp_code(self, code):
         ttk.Label(self.cpp_frame, text=code, wraplength=300, justify=tk.LEFT).pack(side=tk.TOP)
 
     def clear_canvas(self):
         self.canvas.delete("all")
-
 
 if __name__ == "__main__":
     root = tk.Tk()
